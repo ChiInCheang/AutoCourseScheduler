@@ -1,13 +1,16 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QSpacerItem, QSizePolicy, QTreeWidgetItem, QTreeWidget
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
+from database.DB import *
 
 
 class PanelInstructor(QMainWindow):
+    """
+    Draw "Instructor" panel
+    """
     def __init__(self):
         super(PanelInstructor, self).__init__()
-        self.widget = QtWidgets.QWidget(self)
+        self.widget = QWidget(self)
         self.widget.setGeometry(QtCore.QRect(0, 0, 850, 650))
         self.setCentralWidget(self.widget)
         self.layout = QVBoxLayout(self.widget)  # Overall vertical layout
@@ -25,46 +28,71 @@ class PanelInstructor(QMainWindow):
         self.fontL.setBold(True)
         self.fontL.setWeight(75)
 
+        """
+        Widgets
+        """
         # Label "Instructor Filter"
-        self.title = QtWidgets.QLabel(self.widget)
-        self.title.setText("Instructor Filter")
+        self.title = QLabel("Instructor Filter", self.widget)
         self.title.setFont(self.fontL)
         # Instructor filter
         self.filter = QTreeWidget(self.widget)
-        self.filterEvent()
         # Spacer
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         # Previous Button
-        self.previous = QtWidgets.QPushButton(self.widget)
-        self.previous.setText("Previous")
+        self.previous = QPushButton("Previous", self.widget)
         # Next Button
-        self.next = QtWidgets.QPushButton(self.widget)
-        self.next.setText("Next")
+        self.next = QPushButton("Next", self.widget)
 
+        """
+        Layout
+        """
         # Horizontal layout
         self.hl = QHBoxLayout(self.widget)
         self.hl.setContentsMargins(0, 0, 0, 0)
-        self.hl.addItem(spacerItem)
+        self.hl.addItem(self.spacer)
         self.hl.addWidget(self.previous)
         self.hl.addWidget(self.next)
         # Overall layout
         self.layout.addWidget(self.title)
         self.layout.addWidget(self.filter)
         self.layout.addLayout(self.hl)
-        #####
 
-    def filterEvent(self):
-        self.filter.headerItem = QTreeWidgetItem()
+    """
+    Member functions
+    """
+    # update filter
+    def filterEvent(self, panelCourse):
+
+        self.filter.clear()
+
         self.filter.setHeaderLabel("Instructors by Course")
+        self.db = DB()
+        self.db.useDatabase()
 
-        self.filter.item = QTreeWidgetItem()
+        # Access the selectedList in Course Panel
+        root = panelCourse.selectedList.invisibleRootItem()
+        slCount = root.childCount()
+        for i in range(slCount - 1, -1, -1):  # loop through each subject-level
+            slItem = root.child(i)
+            slName = slItem.text(0).split()
+            subjName = slName[0]
+            crseCount = slItem.childCount()
+            for j in range(crseCount - 1, -1, -1):  # loop through each course in current subject-level
+                crseSelected = slItem.child(j)
+                crseText = crseSelected.text(0)
+                crseNum = crseText.split()[0]
 
-        for i in range(3):  # numSelectedCourse
-            parent = QTreeWidgetItem(self.filter)
-            parent.setText(0, "Parent {}".format(i))       # Course Name
-            parent.setFlags(parent.flags() | Qt.ItemIsTristate | Qt.ItemIsUserCheckable)
-            for x in range(5):   # numCourseSection
-                child = QTreeWidgetItem(parent)
-                child.setFlags(child.flags() | Qt.ItemIsUserCheckable)
-                child.setText(0, "Child {}".format(x))      # Instructor Name
-                child.setCheckState(0, Qt.Checked)  # By default all checked
+                # add corresponding course to filter
+                crseItem = QTreeWidgetItem()
+                crseItem.setText(0, "{} {}".format(subjName, crseText))
+                self.filter.addTopLevelItem(crseItem)
+
+                instructors = self.db.getInst(subjName, crseNum)   # Get all instructors teaching the course
+                for instName in instructors:
+                    instructor = QTreeWidgetItem(crseItem)
+                    instructor.setText(0, instName)
+                    instructor.setCheckState(0, Qt.Checked)
+
+        self.db.close()
+        self.filter.expandAll()
+        self.filter.sortItems(0, Qt.AscendingOrder)
