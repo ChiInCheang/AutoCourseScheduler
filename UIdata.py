@@ -7,48 +7,28 @@ class UIdata():
         self.__gui = gui
 
         # int: Total number of course going to take
-        self.__courseLimit = int(self.__gui.pCourse.limit.currentText())
+        self.__courseLimit = None
 
         # list of string: priority
-        self.__priority = self.__gui.pPriority.priorityList.nodes
+        self.__priority = None
 
         # list of boolean: value for school days
         # index 0 - 4: Monday - Friday
-        self.__schoolDay = [self.__gui.pPreference.check1.checkState(),
-                            self.__gui.pPreference.check2.checkState(),
-                            self.__gui.pPreference.check3.checkState(),
-                            self.__gui.pPreference.check4.checkState(),
-                            self.__gui.pPreference.check5.checkState()]
-        # convert to binary check state value
-        for i in range(len(self.__schoolDay)):
-            self.__schoolDay[i] = self.__biCheckState(self.__schoolDay[i])
+        self.__schoolDay = None
 
         # list of boolean: value for length of class
         # index 0 - 2: 50Min, 1Hr15Min, 2Hr45Min
-        self.__classLen = [self.__gui.pPreference.check50.checkState(),
-                           self.__gui.pPreference.check75.checkState(),
-                           self.__gui.pPreference.check180.checkState()]
-        # convert to binary check state value
-        for i in range(len(self.__classLen)):
-            self.__classLen[i] = self.__biCheckState(self.__classLen[i])
+        self.__classLen = None
 
         # list of string: Start Time
         # possible value: from "08:00" to "21:30", every 30 minutes
         # index 0 - 4: Monday - Friday
-        self.__st = [self.__gui.pPreference.st1.currentText(),
-                     self.__gui.pPreference.st2.currentText(),
-                     self.__gui.pPreference.st3.currentText(),
-                     self.__gui.pPreference.st4.currentText(),
-                     self.__gui.pPreference.st5.currentText()]
+        self.__st = None
 
         # list of string: End Time for everyday
         # possible value: from "08:00" to "21:30", every 30 minutes
         # index 0 - 4: Monday - Friday
-        self.__et = [self.__gui.pPreference.et1.currentText(),
-                     self.__gui.pPreference.et2.currentText(),
-                     self.__gui.pPreference.et3.currentText(),
-                     self.__gui.pPreference.et4.currentText(),
-                     self.__gui.pPreference.et5.currentText()]
+        self.__et = None
 
         """
         Data from Selected List (sl)
@@ -61,8 +41,52 @@ class UIdata():
                     inst is a list of tuple (str instName, bool chk)
                     chk is the whether the instructor is checked in the filter 
         """
-        self.__courses = self.__selectedData()
+        self.__courses = None
 
+    def setCourseLimit(self):
+        self.__courseLimit = int(self.__gui.pCourse.limit.currentText())
+
+    def setPriority(self):
+        self.__priority = self.__gui.pPriority.priorityList.nodes
+
+    def setSchoolDay(self):
+        self.__schoolDay = [self.__gui.pPreference.check1.checkState(),
+                            self.__gui.pPreference.check2.checkState(),
+                            self.__gui.pPreference.check3.checkState(),
+                            self.__gui.pPreference.check4.checkState(),
+                            self.__gui.pPreference.check5.checkState()]
+        # convert to binary check state value
+        for i in range(len(self.__schoolDay)):
+            self.__schoolDay[i] = self.__biCheckState(self.__schoolDay[i])
+
+    def setClassLen(self):
+        self.__classLen = [self.__gui.pPreference.check50.checkState(),
+                           self.__gui.pPreference.check75.checkState(),
+                           self.__gui.pPreference.check180.checkState()]
+        # convert to binary check state value
+        for i in range(len(self.__classLen)):
+            self.__classLen[i] = self.__biCheckState(self.__classLen[i])
+
+    def setTime(self):
+        self.__st = [self.__gui.pPreference.st1.currentText(),
+                     self.__gui.pPreference.st2.currentText(),
+                     self.__gui.pPreference.st3.currentText(),
+                     self.__gui.pPreference.st4.currentText(),
+                     self.__gui.pPreference.st5.currentText()]
+
+        self.__et = [self.__gui.pPreference.et1.currentText(),
+                     self.__gui.pPreference.et2.currentText(),
+                     self.__gui.pPreference.et3.currentText(),
+                     self.__gui.pPreference.et4.currentText(),
+                     self.__gui.pPreference.et5.currentText()]
+
+        for i in range(5):
+            self.__st[i] = datetime.strptime(self.__st[i], "%H:%M")
+            self.__et[i] = datetime.strptime(self.__et[i], "%H:%M")
+
+
+    def setCourses(self):
+        self.__courses = self.__selectedData()
 
     def __selectedData(self):
         data = []
@@ -149,6 +173,16 @@ class UIdata():
     def getCourses(self):
         return self.__courses
 
+    def getNotSelectedInst(self):
+        data = []
+        for sl in self.__courses:
+            for crse in sl.crseList:
+                for instructors in crse.instructors:
+                    if instructors[1] == 0:
+                        tup = (crse.crseNum, instructors[0])
+                        data.append(tup)
+        return data
+
     def getCourseLimit(self):
         return self.__courseLimit
 
@@ -202,7 +236,7 @@ class slTuple():
         self.subj = subj            # Name of the subject
         self.lv = lv                # level
         self.lvLimit = lvLimit      # value of the combo box
-        self.crseList = crseList    # list of selected course
+        self.crseList = crseList    # list of selected course (clTuple)
 
 # data container of selected course
 class clTuple():

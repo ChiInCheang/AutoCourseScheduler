@@ -185,7 +185,8 @@ class DB():
     # return data that is needed for course object
     def getClassData(self, crn):
         self.cur = self.db.cursor()
-        sql = "select crn,subj,crse,rem,inst,days,start,end,location,date,prereq1,prereq2,prereq3,sec from classes natural join section natural join lesson where crn = %s"
+        sql = "select crn,subj,crse,rem,inst,days,start,end,location,date,prereq1,prereq2,prereq3,sec " \
+              "from classes natural join section natural join lesson where crn = %s"
         var = (crn)
         self.cur.execute(sql, var)
         result = self.cur.fetchall()
@@ -194,7 +195,8 @@ class DB():
     # return the count of lesson for each crn
     def getLessonCount(self, subj, crse):
         self.cur = self.db.cursor()
-        sql = "select crn, count(*) from classes natural join section natural join lesson where subj = %s and crse = %s group by crn;"
+        sql = "select crn, count(*) " \
+              "from classes natural join section natural join lesson where subj = %s and crse = %s group by crn;"
         var = (subj, crse)
         self.cur.execute(sql, var)
         result = self.cur.fetchall()

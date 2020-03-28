@@ -3,3 +3,4 @@ class Result():
         self.scheduleList = [scheduleList]
 
     def rank(self, priority):
+        pass

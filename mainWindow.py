@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         self.logo.setMaximumSize(150, 118)
         # Labels
         self.lb0 = QLabel("Course", self.leftWidget)
+        self.lb0.setFrameShape(QFrame.Box)
         self.lb0.setAlignment(Qt.AlignCenter)
         self.lb0.setSizePolicy(self.leftSizePolicy)
         self.lb0.setMinimumHeight(self.leftMinHeight)
@@ -115,20 +116,21 @@ class MainWindow(QMainWindow):
         """
         Events
         """
+        # UI data
+        self.guiData = UIdata(self)
         # Panel Indication
         self.rightLayout.currentChanged.connect(lambda: self.panelIndication())
-
         # Next/Previous Buttons
         # Panel Course
-        self.pCourse.next.clicked.connect(lambda: self.click_next_pCourse())
+        self.pCourse.next.clicked.connect(lambda: self.click_next())
         # Panel Instructor
-        self.pInstructor.next.clicked.connect(lambda: self.showNextPanel())
+        self.pInstructor.next.clicked.connect(lambda: self.click_next())
         self.pInstructor.previous.clicked.connect(lambda: self.showPreviousPanel())
         # Panel Preference
-        self.pPreference.next.clicked.connect(lambda: self.showNextPanel())
+        self.pPreference.next.clicked.connect(lambda: self.click_next())
         self.pPreference.previous.clicked.connect(lambda: self.showPreviousPanel())
         # Panel Priority
-        self.pPriority.previous.clicked.connect(lambda: self.showPreviousPanel())
+        self.pPriority.previous.clicked.connect(lambda: self.click_next())
         self.pPriority.submit.clicked.connect(lambda: self.click_submit())
 
 
@@ -136,20 +138,32 @@ class MainWindow(QMainWindow):
     Member functions
     """
     def panelIndication(self):
-        pass
-        # currentIndex = self.rightLayout.currentIndex()
-        # dic = {0: self.lb0,
-        #        1: self.lb1,
-        #        2: self.lb2,
-        #        3: self.lb3,
-        #        4: self.lb4}
-        # for i in range(5):
-        #     dic[i].setStyle(self.style)
-        #     if i is currentIndex:
-        #         dic[i].setStyleSheet("background: red")
+        currentIndex = self.rightLayout.currentIndex()
+        dic = {0: self.lb0,
+               1: self.lb1,
+               2: self.lb2,
+               3: self.lb3,
+               4: self.lb4}
+        for i in range(5):
+            dic[i].setFrameShape(QFrame.NoFrame)
+            if i is currentIndex:
+                dic[i].setFrameShape(QFrame.Box)
 
-    def click_next_pCourse(self):
-        self.pInstructor.filterEvent(self.pCourse)
+    def click_next(self):
+        currentIndex = self.rightLayout.currentIndex()
+
+        if currentIndex == 0:
+            self.guiData.setCourseLimit()
+            self.pInstructor.filterEvent(self.pCourse)
+        elif currentIndex == 1:
+            self.guiData.setCourses()
+        elif currentIndex == 2:
+            self.guiData.setSchoolDay()
+            self.guiData.setTime()
+            self.guiData.setClassLen()
+        elif currentIndex == 3:
+            self.guiData.setPriority()
+
         self.showNextPanel()
 
     def showNextPanel(self):
@@ -159,6 +173,8 @@ class MainWindow(QMainWindow):
         self.rightLayout.setCurrentIndex(self.rightLayout.currentIndex() - 1)
 
     def click_submit(self):
-        self.guiData = UIdata(self)
-        print(self.guiData.dataValidation())
+        # print(self.guiData.dataValidation())
+        print("OK")
+        filtedInst = self.guiData.getNotSelectedInst()
+        print(filtedInst)
         self.showNextPanel()
