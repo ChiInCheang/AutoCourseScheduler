@@ -6,6 +6,7 @@ from pPreference import PanelPreference
 from pPriority import PanelPriority
 from pResult import PanelResult
 from UIdata import *
+from core.coreDriver import coreDriver
 
 
 class MainWindow(QMainWindow):
@@ -18,19 +19,17 @@ class MainWindow(QMainWindow):
         """
         self.setGeometry(200, 200, 1000, 650)
         self.setWindowTitle("Auto Course Scheduler")
-        self.setWindowIcon(QtGui.QIcon('pic/prgmIcon.png'))
+        self.setWindowIcon(QtGui.QIcon('pictures/prgmIcon.png'))
         self.centralWidget = QWidget(self)
         self.setCentralWidget(self.centralWidget)
         self.centralLayout = QHBoxLayout(self.centralWidget)   # Central Widget using horizontal layout
 
         '''
-        Left column
+        Left column widgets
         '''
         self.leftWidget = QWidget(self.centralWidget)
         self.leftWidget.setMaximumWidth(150)
-        self.leftLayout = QVBoxLayout(self.leftWidget)     # leftWidget using vertical layout
-        self.leftLayout.setContentsMargins(0, 0, 0, 0)
-        self.leftLayout.setSpacing(0)
+
         # Font of leftWidget
         self.font = QtGui.QFont()
         self.font.setFamily("Arial")
@@ -41,77 +40,83 @@ class MainWindow(QMainWindow):
         self.leftMinHeight = 50
         # Logo
         self.logo = QLabel(self.leftWidget)
-        self.logo.setPixmap(QtGui.QPixmap("pic/MClogo.png"))
+        self.logo.setPixmap(QtGui.QPixmap("pictures/MClogo.png"))
         self.logo.setScaledContents(True)
         self.logo.setSizePolicy(self.leftSizePolicy)
         self.logo.setMaximumSize(150, 118)
-        # Button "Course"
-        self.course = QPushButton("Course", self.leftWidget)
-        self.course.setSizePolicy(self.leftSizePolicy)
-        self.course.setMinimumHeight(self.leftMinHeight)
-        # Button "Instructor"
-        self.instructor = QPushButton("Instructor", self.leftWidget)
-        self.instructor.setSizePolicy(self.leftSizePolicy)
-        self.instructor.setMinimumHeight(self.leftMinHeight)
-        # Button "Preference"
-        self.preference = QPushButton("Preference", self.leftWidget)
-        self.preference.setSizePolicy(self.leftSizePolicy)
-        self.preference.setMinimumHeight(self.leftMinHeight)
-        # Button "Priority"
-        self.priority = QPushButton("Priority", self.leftWidget)
-        self.priority.setSizePolicy(self.leftSizePolicy)
-        self.priority.setMinimumHeight(self.leftMinHeight)
-        # Button "Result"
-        self.result = QPushButton("Result", self.leftWidget)
-        self.result.setSizePolicy(self.leftSizePolicy)
-        self.result.setMinimumHeight(self.leftMinHeight)
+        # Labels
+        self.lb0 = QLabel("Course", self.leftWidget)
+        self.lb0.setAlignment(Qt.AlignCenter)
+        self.lb0.setSizePolicy(self.leftSizePolicy)
+        self.lb0.setMinimumHeight(self.leftMinHeight)
+
+        self.lb1 = QLabel("Instructor", self.leftWidget)
+        self.lb1.setAlignment(Qt.AlignCenter)
+        self.lb1.setSizePolicy(self.leftSizePolicy)
+        self.lb1.setMinimumHeight(self.leftMinHeight)
+
+        self.lb2 = QLabel("Preference", self.leftWidget)
+        self.lb2.setAlignment(Qt.AlignCenter)
+        self.lb2.setSizePolicy(self.leftSizePolicy)
+        self.lb2.setMinimumHeight(self.leftMinHeight)
+
+        self.lb3 = QLabel("Priority", self.leftWidget)
+        self.lb3.setAlignment(Qt.AlignCenter)
+        self.lb3.setSizePolicy(self.leftSizePolicy)
+        self.lb3.setMinimumHeight(self.leftMinHeight)
+
+        self.lb4 = QLabel("Result", self.leftWidget)
+        self.lb4.setAlignment(Qt.AlignCenter)
+        self.lb4.setSizePolicy(self.leftSizePolicy)
+        self.lb4.setMinimumHeight(self.leftMinHeight)
         # Spacer
         self.vSpacer1 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.vSpacer2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        # Add widgets to left column
-        self.leftLayout.addWidget(self.logo)
-        self.leftLayout.addSpacerItem(self.vSpacer1)
-        self.leftLayout.addWidget(self.course)
-        self.leftLayout.addWidget(self.instructor)
-        self.leftLayout.addWidget(self.preference)
-        self.leftLayout.addWidget(self.priority)
-        self.leftLayout.addWidget(self.result)
-        self.leftLayout.addSpacerItem(self.vSpacer2)
+
 
         '''
-        Right column
+        Right column widget
         '''
         self.rightWidget = QWidget(self.centralWidget)
-        self.rightLayout = QStackedLayout(self.rightWidget)  # Right column using stacked layout
-
         # Panels
         self.pCourse = PanelCourse()
         self.pInstructor = PanelInstructor()
         self.pPreference = PanelPreference()
         self.pPriority = PanelPriority()
         self.pResult = PanelResult()
+
+
+        """
+        Layout
+        """
+        # Add widgets to left column
+        self.leftLayout = QVBoxLayout(self.leftWidget)  # leftWidget using vertical layout
+        self.leftLayout.setContentsMargins(0, 0, 0, 0)
+        self.leftLayout.setSpacing(0)
+        self.leftLayout.addWidget(self.logo)
+        self.leftLayout.addSpacerItem(self.vSpacer1)
+        self.leftLayout.addWidget(self.lb0)
+        self.leftLayout.addWidget(self.lb1)
+        self.leftLayout.addWidget(self.lb2)
+        self.leftLayout.addWidget(self.lb3)
+        self.leftLayout.addWidget(self.lb4)
+        self.leftLayout.addSpacerItem(self.vSpacer2)
         # Add panels to the stacked layout
+        self.rightLayout = QStackedLayout(self.rightWidget)  # Right column using stacked layout
         self.rightLayout.addWidget(self.pCourse)
         self.rightLayout.addWidget(self.pInstructor)
         self.rightLayout.addWidget(self.pPreference)
         self.rightLayout.addWidget(self.pPriority)
         self.rightLayout.addWidget(self.pResult)
-
-        """
-        Layout
-        """
+        # Overall Layout
         self.centralLayout.addWidget(self.leftWidget)
         self.centralLayout.addWidget(self.rightWidget)
 
         """
         Events
         """
-        # Buttons in left column
-        self.course.clicked.connect(lambda: self.showPanel(0))
-        self.instructor.clicked.connect(lambda: self.clickInst())
-        self.preference.clicked.connect(lambda: self.showPanel(2))
-        self.priority.clicked.connect(lambda: self.showPanel(3))
-        self.result.clicked.connect(lambda: self.showPanel(4))
+        # Panel Indication
+        self.rightLayout.currentChanged.connect(lambda: self.panelIndication())
 
         # Next/Previous Buttons
         # Panel Course
@@ -125,20 +130,27 @@ class MainWindow(QMainWindow):
         # Panel Priority
         self.pPriority.previous.clicked.connect(lambda: self.showPreviousPanel())
         self.pPriority.submit.clicked.connect(lambda: self.click_submit())
+
+
     """
     Member functions
     """
-    def clickInst(self):
-        if self.rightLayout.currentIndex() == 0:
-            self.pInstructor.filterEvent(self.pCourse)
-        self.showPanel(1)
+    def panelIndication(self):
+        pass
+        # currentIndex = self.rightLayout.currentIndex()
+        # dic = {0: self.lb0,
+        #        1: self.lb1,
+        #        2: self.lb2,
+        #        3: self.lb3,
+        #        4: self.lb4}
+        # for i in range(5):
+        #     dic[i].setStyle(self.style)
+        #     if i is currentIndex:
+        #         dic[i].setStyleSheet("background: red")
 
     def click_next_pCourse(self):
         self.pInstructor.filterEvent(self.pCourse)
         self.showNextPanel()
-
-    def showPanel(self, index):
-        self.rightLayout.setCurrentIndex(index)
 
     def showNextPanel(self):
         self.rightLayout.setCurrentIndex(self.rightLayout.currentIndex() + 1)
@@ -147,9 +159,6 @@ class MainWindow(QMainWindow):
         self.rightLayout.setCurrentIndex(self.rightLayout.currentIndex() - 1)
 
     def click_submit(self):
-        self.guiData = self.submitUIData()
+        self.guiData = UIdata(self)
+        print(self.guiData.dataValidation())
         self.showNextPanel()
-
-    def submitUIData(self):
-        guiData = UIdata(self)
-        return guiData

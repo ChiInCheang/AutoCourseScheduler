@@ -24,6 +24,12 @@ class PanelCourse(QMainWindow):
         """
         Widgets
         """
+        # Label
+        self.label = QLabel("Total number of course going to take: ", self.widget)
+        # Combo Box
+        self.limit = QComboBox(self.widget)
+        self.limit.addItems([str(n + 1) for n in range(10)])
+        self.limit.setCurrentIndex(4)
         # Search Bar
         self.searchBar = QLineEdit(self.widget)
         self.searchBar.setClearButtonEnabled(True)
@@ -36,8 +42,10 @@ class PanelCourse(QMainWindow):
         self.spacer4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         # Course List
         self.courseList = QTreeWidget(self.widget)
+        self.initCourseList()
         # Selected Course List
         self.selectedList = QTreeWidget(self.widget)
+        self.initSelectedList()
         # Add Button
         self.add = QPushButton("Add", self.widget)
         # Remove Button
@@ -53,6 +61,8 @@ class PanelCourse(QMainWindow):
         self.hl1.addWidget(self.searchBar)
         self.hl1.addWidget(self.search)
         self.hl1.addItem(self.spacer1)
+        self.hl1.addWidget(self.label)
+        self.hl1.addWidget(self.limit)
         # Horizontal layout 2
         self.hl2 = QHBoxLayout(self.widget)
         self.hl2.addWidget(self.courseList)
@@ -67,7 +77,7 @@ class PanelCourse(QMainWindow):
         self.hl4 = QHBoxLayout(self.widget)
         self.hl4.addItem(self.spacer4)
         self.hl4.addWidget(self.next)
-        # Overall layout
+        # Overall vertical layout
         self.layout.addLayout(self.hl1)
         self.layout.addLayout(self.hl2)
         self.layout.addLayout(self.hl3)
@@ -76,10 +86,8 @@ class PanelCourse(QMainWindow):
         """
         Events
         """
-        self.initCourseList()
-        self.initSelectedList()
-        self.add.clicked.connect(lambda: self.addButtonEvent())
-        self.remove.clicked.connect(lambda: self.removeButtonEvent())
+        self.add.clicked.connect(lambda: self.__addButtonEvent())
+        self.remove.clicked.connect(lambda: self.__removeButtonEvent())
 
 
     """
@@ -88,33 +96,33 @@ class PanelCourse(QMainWindow):
     def initCourseList(self):
         self.courseList.setHeaderLabel("Course Available")
         # show the horizontal scrollbar when needed
-        self.courseList.expanded.connect(lambda: self.courseList.setColumnWidth(0, self.courseList.width()))
+        self.courseList.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.courseList.header().setStretchLastSection(False)
 
         # connect to database
-        self.db = DB()
-        self.db.useDatabase()
-
+        db = DB()
+        db.useDatabase()
         # fetch and display data
-        subjects = self.db.getSubject()     # list of subject
+        subjects = db.getSubject()     # list of subject
         for x in subjects:  # x: subject name
             subjItem = QTreeWidgetItem(self.courseList)
             subjItem.setText(0, x)
-            levels = self.db.getLevel(x)
+            levels = db.getLevel(x)
             for y in levels:    # y: level in subject x
                 lvItem = QTreeWidgetItem(subjItem)
                 lvItem.setFlags(lvItem.flags() | Qt.ItemIsTristate | Qt.ItemIsUserCheckable)
                 lvItem.setText(0, "{} Level".format(y))
                 lvItem.setCheckState(0, Qt.Unchecked)
-                courses = self.db.getCourse(x, y)
+                courses = db.getCourse(x, y)
                 for z in courses:   # z: course name in "subject x - level y"
                     crseItem = QTreeWidgetItem(lvItem)
-                    title = self.db.getTitle(x, z)
+                    title = db.getTitle(x, z)
                     crseItem.setFlags(crseItem.flags() | Qt.ItemIsUserCheckable)
                     crseItem.setText(0, "{} - {}".format(z, title[0]))
                     crseItem.setCheckState(0, Qt.Unchecked)
 
         self.courseList.sortItems(0, Qt.AscendingOrder)
-        self.db.close()
+        db.close()
 
     def initSelectedList(self):
         self.selectedList.setColumnCount(3)
@@ -123,7 +131,16 @@ class PanelCourse(QMainWindow):
         self.selectedList.setColumnWidth(1, 90)
         self.selectedList.setColumnWidth(2, 80)
 
-    def addButtonEvent(self):
+    def __addButtonEvent(self):
+        """
+        access the root of courseList
+        loop through each subject:
+            loop each level in the subject:
+                if the level is not Unchecked (that means, Checked or Partially Checked):
+                    take the checked courses in the level from the courseList,
+                    add them to the selectedList
+        sort the item in selectedList
+        """
         root = self.courseList.invisibleRootItem()
         subjCount = root.childCount()
         for i in range(subjCount):     # loop through each subject
@@ -132,11 +149,10 @@ class PanelCourse(QMainWindow):
             for j in range(lvCount - 1, -1, -1):    # loop through each level in current subject
                 lvItem = subjItem.child(j)
                 lvState = lvItem.checkState(0)
-                if lvState != Qt.Unchecked:   # if entire level is checked
+                if lvState != Qt.Unchecked:
                     self.__addToSelected(subjItem, lvItem)
         self.selectedList.sortItems(0, Qt.AscendingOrder)
 
-    # used only by addButtonEvent()
     def __addToSelected(self, subjItem, lvItem):
         # find corresponding subject-level
         searchTerm = "{} {}".format(subjItem.text(0), lvItem.text(0))
@@ -146,6 +162,7 @@ class PanelCourse(QMainWindow):
             tarLv = find[0]
         else:
             # create level item in selectedList
+            # this is the target level item will be added course
             tarLv = QTreeWidgetItem()
             tarLv.setText(0, searchTerm)
             # combo box for each level item
@@ -153,7 +170,7 @@ class PanelCourse(QMainWindow):
             num = [str(n+1) for n in range(9)]
             num.append("Ignore")
             comboBox.addItems(num)
-            comboBox.setCurrentIndex(len(num) -1 )
+            comboBox.setCurrentIndex(len(num) - 1)
             self.selectedList.addTopLevelItem(tarLv)
             self.selectedList.setItemWidget(tarLv, 2, comboBox)
             self.selectedList.expandItem(tarLv)
@@ -168,7 +185,7 @@ class PanelCourse(QMainWindow):
                 checkedItem.setText(0, "{}".format(crseItem.text(0)))
                 checkedItem.setCheckState(0, Qt.Unchecked)
                 tarLv.addChild(checkedItem)
-                checkBox = QCheckBox()
+                checkBox = QCheckBox()      # check box for mandatory in the second column
                 checkBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
                 self.selectedList.setItemWidget(checkedItem, 1, checkBox)
 
@@ -176,7 +193,15 @@ class PanelCourse(QMainWindow):
         if lvItem.childCount() == 0:
             subjItem.removeChild(lvItem)
 
-    def removeButtonEvent(self):
+    def __removeButtonEvent(self):
+        """
+        access the root of selectedList
+        loop through each subject-level:
+            loop each course in the subject-level:
+                if the level is checked:
+                    remove the course in the level and add it back to courseList
+        sort the item in CourseList
+        """
         root = self.selectedList.invisibleRootItem()
         slCount = root.childCount()
         for i in range(slCount - 1, -1, -1):  # loop through each subject-level
@@ -186,12 +211,9 @@ class PanelCourse(QMainWindow):
                 crseItem = slItem.child(j)
                 crseState = crseItem.checkState(0)
                 if crseState == Qt.Checked:  # if crse is checked
-                    self.__removeFromSelcted(i, j,slItem)
-
+                    self.__removeFromSelcted(i, j, slItem)
         self.courseList.sortItems(0, Qt.AscendingOrder)
-        self.selectedList.sortItems(0, Qt.AscendingOrder)
 
-    # used only by removeButtonEvent()
     def __removeFromSelcted(self, i, j, slItem):
         # find corresponding subject
         searchTerm = slItem.text(0).split()
@@ -199,14 +221,15 @@ class PanelCourse(QMainWindow):
         lvName = " ".join(searchTerm[1:len(searchTerm)])
         tarSubj = self.courseList.findItems(subjName, Qt.MatchExactly)[0]
         isFind = False
-        # check if the level exists in corresponding subject
+        # check if the level exists in corresponding subject (in courseList)
         for k in range(tarSubj.childCount()):
             lvItem = tarSubj.child(k)
             if lvItem.text(0) == lvName:
+                # access the target level item
                 tarLv = lvItem
                 isFind = True
                 break
-
+        # if not
         if isFind is False:     # create level in courseList
             tarLv = QTreeWidgetItem()
             tarLv.setText(0, lvName)
@@ -214,11 +237,12 @@ class PanelCourse(QMainWindow):
             tarLv.setCheckState(0, Qt.Unchecked)
             tarSubj.addChild(tarLv)
 
-        # move checked crse
+        # move checked crse to courseList
         crseItem = slItem.takeChild(j)
         crseItem.setCheckState(0, Qt.Unchecked)
         tarLv.addChild(crseItem)
 
+        # remove empty subject-item
         if slItem.childCount() == 0:
             self.selectedList.removeItemWidget(slItem, 2)
             self.selectedList.removeItemWidget(slItem, 0)

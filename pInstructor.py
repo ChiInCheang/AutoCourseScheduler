@@ -62,12 +62,11 @@ class PanelInstructor(QMainWindow):
     """
     # update filter
     def filterEvent(self, panelCourse):
-
         self.filter.clear()
-
         self.filter.setHeaderLabel("Instructors by Course")
-        self.db = DB()
-        self.db.useDatabase()
+
+        db = DB()
+        db.useDatabase()
 
         # Access the selectedList in Course Panel
         root = panelCourse.selectedList.invisibleRootItem()
@@ -87,12 +86,12 @@ class PanelInstructor(QMainWindow):
                 crseItem.setText(0, "{} {}".format(subjName, crseText))
                 self.filter.addTopLevelItem(crseItem)
 
-                instructors = self.db.getInst(subjName, crseNum)   # Get all instructors teaching the course
+                instructors = db.getInst(subjName, crseNum)   # Get all instructors teaching the course
                 for instName in instructors:
                     instructor = QTreeWidgetItem(crseItem)
                     instructor.setText(0, instName)
                     instructor.setCheckState(0, Qt.Checked)
 
-        self.db.close()
+        db.close()
         self.filter.expandAll()
         self.filter.sortItems(0, Qt.AscendingOrder)

@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import *
+from PyQt5 import QtGui
 
 # Source: https://github.com/d1vanov/PyQt5-reorderable-list-model/blob/master/reorderable_list_model.py
 from reorderableList import *
@@ -40,7 +41,6 @@ class PanelPriority(QMainWindow):
         # Priority List
         nodes = ['Instructor', 'School Day', 'Start Time', 'End Time', 'Length of Class']
         self.priorityList = MainForm(nodes)
-        self.priorityList.show()
         self.priorityList.view.setFont(self.listFont)
         # Spacer
         self.spacer1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)

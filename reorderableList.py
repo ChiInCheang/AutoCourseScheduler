@@ -1,5 +1,5 @@
+from PyQt5 import QtWidgets, QtCore
 import sys
-from PyQt5 import QtWidgets, QtCore, QtGui
 
 class ReorderableListModel(QtCore.QAbstractListModel):
     '''
@@ -196,12 +196,13 @@ class MainForm(QtWidgets.QMainWindow):
         self.view.setDragDropOverwriteMode(False)
 
         self.setCentralWidget(self.view)
+        self.show()
 
-# def main():
-#     app = QtWidgets.QApplication(sys.argv)
-#     form = MainForm()
-#     form.show()
-#     app.exec_()
-#
-# if __name__ == '__main__':
-#     main()
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    form = MainForm()
+    app.exec_()
+
+
+if __name__ == '__main__':
+    main()

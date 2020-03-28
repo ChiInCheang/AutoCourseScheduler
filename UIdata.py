@@ -1,9 +1,13 @@
 from PyQt5.QtCore import Qt
+from datetime import datetime
 
 # a class getting data from the gui
 class UIdata():
     def __init__(self, gui):
         self.__gui = gui
+
+        # int: Total number of course going to take
+        self.__courseLimit = int(self.__gui.pCourse.limit.currentText())
 
         # list of string: priority
         self.__priority = self.__gui.pPriority.priorityList.nodes
@@ -15,6 +19,7 @@ class UIdata():
                             self.__gui.pPreference.check3.checkState(),
                             self.__gui.pPreference.check4.checkState(),
                             self.__gui.pPreference.check5.checkState()]
+        # convert to binary check state value
         for i in range(len(self.__schoolDay)):
             self.__schoolDay[i] = self.__biCheckState(self.__schoolDay[i])
 
@@ -23,6 +28,7 @@ class UIdata():
         self.__classLen = [self.__gui.pPreference.check50.checkState(),
                            self.__gui.pPreference.check75.checkState(),
                            self.__gui.pPreference.check180.checkState()]
+        # convert to binary check state value
         for i in range(len(self.__classLen)):
             self.__classLen[i] = self.__biCheckState(self.__classLen[i])
 
@@ -46,18 +52,16 @@ class UIdata():
 
         """
         Data from Selected List (sl)
-        list of slTuples:
+        list of slTuple:
              [(str subj, str lv, str #crse, list crse)]
         eg. ("CMPT", "100", "Ignore", crse)
-              possible value of #crse: "1"-"9" and "Ignore"
-              crse is the list of selected-CMPT-100lv courses
-              
-              tuple in crse: (str crseNo, bool isMandatory, list inst)
-              eg. ("101", True, inst)
+            cres is a list of clTuple:
+            [(str crseNum, bool mandatory, list instructors)]
+            eg. ("101", True, instructors)
                     inst is a list of tuple (str instName, bool chk)
                     chk is the whether the instructor is checked in the filter 
         """
-        self.__sl = self.__selectedData()
+        self.__courses = self.__selectedData()
 
 
     def __selectedData(self):
@@ -76,11 +80,11 @@ class UIdata():
             subj = slText[0]
             lv = slText[1]
             # get combo box value
-            cb = sl.itemWidget(slItem, 2).currentText()
+            lvLimit = sl.itemWidget(slItem, 2).currentText()
             # data of courses in current subj-level
             crseList = self.__courseData(subj, slItem)
 
-            tup = slTuple(subj, lv, cb, crseList)
+            tup = slTuple(subj, lv, lvLimit, crseList)
             data.append(tup)
 
         return data
@@ -143,14 +147,61 @@ class UIdata():
         return self.__et
 
     def getCourses(self):
-        return self.__sl
+        return self.__courses
+
+    def getCourseLimit(self):
+        return self.__courseLimit
+
+    def dataValidation(self):
+        message = []
+
+        # start time and end time
+        for i in range(5):
+            st = datetime.strptime(self.__st[i], "%H:%M")
+            et = datetime.strptime(self.__et[i], "%H:%M")
+            if st > et:
+                message.append("Start Time later than End Time")
+                break
+
+        # length of class
+        if all(v == 0 for v in self.__classLen):
+            message.append("No Length of Class Selected")
+
+        # school day
+        if all(v == 0 for v in self.__schoolDay):
+            message.append("No School Day Selected")
+        #
+        # course = self.__courses
+        # sum_Man = 0     # sum of user-selected mandatory
+        # for subjLv in course:
+        #     sum_LvMan = 0   # sum of user-selected mandatory in the subj-level
+        #     crseList = subjLv.crseList
+        #     for crse in crseList:
+        #         sum_LvMan += crse.mandatory
+        #         sum_Man += crse.mandatory
+        #
+        #         for instructor in crse.instructors:
+        #             if crse.mandatory == 1 and len(crse.instructors) == 1 and instructor[1] == 0:
+        #                 msg = "For your mandatory course " + str(subjLv.subj) + str(crse.crseNum) + \
+        #                       ", choose at least one instructor"
+        #                 message.append(msg)
+        #
+        #     if sum_LvMan > int(subjLv.lvLimit) and subjLv.lvLimit is not "Ignore":
+        #         msg = "For " + str(subjLv.subj) + str(subjLv.lv) + " Level : # of Mandatory Course > # of Course"
+        #         message.append(msg)
+        #
+        # if sum_Man > self.__courseLimit:
+        #     message.append("# of Mandatory Course > # of Course going to take")
+
+        return message
+
 
 # container for data of selected list
 class slTuple():
-    def __init__(self, subj, lv, cb, crseList):
+    def __init__(self, subj, lv, lvLimit, crseList):
         self.subj = subj            # Name of the subject
         self.lv = lv                # level
-        self.cb = cb                # value of the combo box
+        self.lvLimit = lvLimit      # value of the combo box
         self.crseList = crseList    # list of selected course
 
 # data container of selected course
